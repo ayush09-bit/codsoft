@@ -1,0 +1,135 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class QuizApplicationWithTimer {
+    private static final int NUM_QUESTIONS = 5; // Number of quiz questions
+    private static final int TIME_LIMIT_SECONDS = 15; // Time limit for each question (in seconds)
+
+    private static String[] questions = {
+        "What is the capital of India?",
+        "Which planet is known as the Red Planet?",
+        "Who wrote the play 'wings of fire'?",
+        "What is the chemical symbol for water?",
+        "What is the tallest mountain in the world?"
+    };
+
+    private static String[][] options = {
+        {"New Delhi", "Mumbai", "Berlin", "London"},
+        {"Mars", "Venus", "Jupiter", "Mercury"},
+        {"William Shakespeare", "Dr. A.P.J Abdul Kalam", "Munsi premchand", "Mark Twain"},
+        {"H2O", "CO2", "O2", "N2"},
+        {"Mount Kilimanjaro", "Mount Everest", "Mount McKinley", "Mount Fuji"}
+    };
+
+    private static int[] correctAnswers = {0, 0, 1, 0, 1}; // Index of correct answers
+
+    private static int score = 0;
+    private static int currentQuestion = 0;
+    private static Timer timer;
+    private static JLabel timeLabel;
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            createAndShowGUI();
+        });
+    }
+
+    private static void createAndShowGUI() {
+        JFrame frame = new JFrame("Quiz Application");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        final JLabel questionLabel = new JLabel();
+        final JPanel optionsPanel = new JPanel(new GridLayout(4, 1));
+        JButton submitButton = new JButton("Submit");
+        timeLabel = new JLabel("Time: " + TIME_LIMIT_SECONDS + " seconds");
+
+        // Initialize the first question
+        displayQuestion(questionLabel, optionsPanel);
+
+        submitButton.addActionListener(e -> {
+            checkAnswer(optionsPanel);
+            currentQuestion++;
+            if (currentQuestion < NUM_QUESTIONS) {
+                displayQuestion(questionLabel, optionsPanel);
+                startTimer();
+            } else {
+                showResult(frame);
+            }
+        });
+
+        frame.add(questionLabel, BorderLayout.NORTH);
+        frame.add(optionsPanel, BorderLayout.CENTER);
+        frame.add(submitButton, BorderLayout.SOUTH);
+        frame.add(timeLabel, BorderLayout.EAST);
+
+        frame.pack();
+        frame.setVisible(true);
+
+        startTimer();
+    }
+
+    private static void displayQuestion(JLabel questionLabel, JPanel optionsPanel) {
+        questionLabel.setText(questions[currentQuestion]);
+        optionsPanel.removeAll();
+        ButtonGroup buttonGroup = new ButtonGroup();
+        for (int i = 0; i < 4; i++) {
+            JRadioButton radioButton = new JRadioButton(options[currentQuestion][i]);
+            buttonGroup.add(radioButton);
+            optionsPanel.add(radioButton);
+        }
+        optionsPanel.revalidate();
+    }
+
+    private static void startTimer() {
+        if (timer != null) {
+            timer.stop();
+        }
+        timer = new Timer(1000, new ActionListener() {
+            int time = TIME_LIMIT_SECONDS;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                time--;
+                timeLabel.setText("Time: " + time + " seconds");
+                if (time == 0) {
+                    checkAnswer(null);
+                    currentQuestion++;
+                    if (currentQuestion < NUM_QUESTIONS) {
+                        displayQuestion((JLabel) ((JFrame) SwingUtilities.getWindowAncestor(timeLabel)).getContentPane().getComponent(0), (JPanel) ((JFrame) SwingUtilities.getWindowAncestor(timeLabel)).getContentPane().getComponent(1));
+                        startTimer();
+                    } else {
+                        showResult((JFrame) SwingUtilities.getWindowAncestor(timeLabel));
+                    }
+                }
+            }
+        });
+        timer.start();
+    }
+
+    private static void checkAnswer(JPanel optionsPanel) {
+        if (optionsPanel != null) {
+            String selectedAnswer = null;
+            for (Component component : optionsPanel.getComponents()) {
+                if (component instanceof JRadioButton) {
+                    JRadioButton radioButton = (JRadioButton) component;
+                    if (radioButton.isSelected()) {
+                        selectedAnswer = radioButton.getText();
+                        break;
+                    }
+                }
+            }
+            if (selectedAnswer != null) {
+                if (selectedAnswer.equals(options[currentQuestion][correctAnswers[currentQuestion]])) {
+                    score++;
+                }
+            }
+        }
+    }
+
+    private static void showResult(JFrame frame) {
+        JOptionPane.showMessageDialog(frame, "Your final score is " + score + " out of " + NUM_QUESTIONS);
+    }
+}
